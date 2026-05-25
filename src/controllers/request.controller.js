@@ -6,9 +6,7 @@ import { successView } from '../views/success.view.js';
 import { messagesView } from '../views/messages.view.js';
 import { editView } from '../views/edit.view.js';
 
-export function showForm(req, res) {
-  res.type('html').send(formView());
-}
+
 
 export async function sendMessage(req, res) {
   const name = clampString(req.body?.name, 50);
