@@ -9,33 +9,7 @@ import { editView } from '../views/edit.view.js';
 
 
 
-export async function updateMessage(req, res) {
-  const { id } = req.params;
-  const name = clampString(req.body?.name, 50);
-  const message = clampString(req.body?.message, 500);
 
-  if (!name || !message) {
-    return res
-      .status(400)
-      .type('html')
-      .send('<p>Fel: saknar namn eller meddelande.</p><p><a href="/messages">Tillbaka</a></p>');
-  }
-
-  const { error } = await supabase
-    .from('request_messages')
-    .update({ name, message })
-    .eq('id', id);
-
-  if (error) {
-    console.error('[supabase] update error:', error);
-    return res
-      .status(500)
-      .type('html')
-      .send('<p>Serverfel vid uppdatering.</p><p><a href="/messages">Tillbaka</a></p>');
-  }
-
-  res.redirect('/messages');
-}
 
 export async function deleteMessage(req, res) {
   const { id } = req.params;
