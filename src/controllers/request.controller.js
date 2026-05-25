@@ -8,24 +8,6 @@ import { editView } from '../views/edit.view.js';
 
 
 
-export async function showEditForm(req, res) {
-  const { id } = req.params;
-
-  const { data, error } = await supabase
-    .from('request_messages')
-    .select('id, name, message')
-    .eq('id', id)
-    .single();
-
-  if (error || !data) {
-    return res
-      .status(404)
-      .type('html')
-      .send('<p>Inlägg hittades inte.</p><p><a href="/messages">Tillbaka</a></p>');
-  }
-
-  res.type('html').send(editView(data));
-}
 
 export async function updateMessage(req, res) {
   const { id } = req.params;
