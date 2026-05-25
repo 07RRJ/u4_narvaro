@@ -6,22 +6,7 @@ import { successView } from '../views/success.view.js';
 import { messagesView } from '../views/messages.view.js';
 import { editView } from '../views/edit.view.js';
 
-export async function listMessages(req, res) {
-  const { data, error } = await supabase
-    .from('request_messages')
-    .select('id, created_at, name, message')
-    .order('created_at', { ascending: true });
 
-  if (error) {
-    console.error('[supabase] select error:', error);
-    return res
-      .status(500)
-      .type('html')
-      .send('<p>Serverfel när vi skulle läsa från databasen.</p><p><a href="/">Tillbaka</a></p>');
-  }
-
-  res.type('html').send(messagesView(data || []));
-}
 
 export async function showEditForm(req, res) {
   const { id } = req.params;
