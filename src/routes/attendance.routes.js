@@ -103,50 +103,58 @@ router.post('/attendance/save', requireTeacher, async (req, res) => {
   const weekDates = getWeekDates(offset);
   const teacherId = req.teacher.id;
 
-  // Parse the nested form data: { studentId: { date: "1" } }
   const presentMap = req.body.present ?? {};
 
-  // 1. Ensure a session row exists for every non-future weekday
+  // Only save non-future days
   const today = new Date().toISOString().split('T')[0];
   const editableDates = weekDates.filter((d) => d <= today);
 
-  // Upsert sessions for editable days
-  const sessionUpserts = editableDates.map((date) => ({
-    session_date: date,
-    created_by: teacherId,
-  }));
+  if (!editableDates.length) {
+    return res.redirect(`/attendance?week=${offset}`);
+  }
 
-  const { data: sessions, error: sessionError } = await supabase
+  // 1. Ensure session rows exist for editable days.
+  //    upsert with ignoreDuplicates:true → Postgres "INSERT ... ON CONFLICT DO NOTHING"
+  //    Only needs INSERT policy — existing rows are left untouched.
+  const { error: insertError } = await supabase
     .from('attendance_sessions')
-    .upsert(sessionUpserts, { onConflict: 'session_date' })
-    .select('id, session_date');
+    .upsert(
+      editableDates.map((date) => ({ session_date: date, created_by: teacherId })),
+      { onConflict: 'session_date', ignoreDuplicates: true }
+    );
 
-  if (sessionError) {
-    console.error('[attendance/save] session upsert error:', sessionError);
+  if (insertError) {
+    console.error('[attendance/save] session insert error:', insertError);
+    return res.redirect(`/attendance/edit?week=${offset}`);
+  }
+
+  // 2. Fetch canonical session IDs (covers both new and pre-existing rows)
+  const { data: sessions, error: fetchError } = await supabase
+    .from('attendance_sessions')
+    .select('id, session_date')
+    .in('session_date', editableDates);
+
+  if (fetchError || !sessions?.length) {
+    console.error('[attendance/save] session fetch error:', fetchError);
     return res.redirect(`/attendance/edit?week=${offset}`);
   }
 
   const sessionByDate = Object.fromEntries(sessions.map((s) => [s.session_date, s.id]));
 
-  // 2. Fetch all students to know which IDs are valid
-  const { data: students } = await supabase
-    .from('students')
-    .select('id');
-
+  // 3. Fetch all valid student IDs
+  const { data: students } = await supabase.from('students').select('id');
   const studentIds = new Set((students ?? []).map((s) => String(s.id)));
 
-  // 3. Build the full upsert payload for all students × editable days
+  // 4. Build upsert payload: one row per student × editable day
   const records = [];
   for (const date of editableDates) {
     const sessionId = sessionByDate[date];
     if (!sessionId) continue;
-
     for (const studentId of studentIds) {
-      const present = presentMap[studentId]?.[date] === '1';
       records.push({
         session_id: sessionId,
         student_id: parseInt(studentId, 10),
-        present,
+        present: presentMap[studentId]?.[date] === '1',
         marked_by: teacherId,
         marked_at: new Date().toISOString(),
       });
@@ -160,6 +168,8 @@ router.post('/attendance/save', requireTeacher, async (req, res) => {
 
     if (recordError) {
       console.error('[attendance/save] record upsert error:', recordError);
+    } else {
+      console.log(`[attendance/save] wrote ${records.length} records for week offset ${offset}`);
     }
   }
 

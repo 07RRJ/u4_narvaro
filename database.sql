@@ -107,3 +107,19 @@ CREATE POLICY "records_delete"
   TO authenticated USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('teacher','admin'))
   );
+
+
+-- ── Patch: add missing UPDATE policy for attendance_sessions ─────────────────
+-- Without this, upsert on attendance_sessions silently fails for existing rows.
+-- (If using insert with ignoreDuplicates this policy is not strictly required,
+-- but add it anyway for completeness.)
+CREATE POLICY "sessions_update"
+  ON public.attendance_sessions FOR UPDATE
+  TO authenticated USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('teacher','admin'))
+  );
+
+-- ── Patch: clean up any non-Monday–Friday session rows ───────────────────────
+-- EXTRACT(DOW ...) returns 0=Sun,1=Mon,...,6=Sat. Keep only 1–5.
+DELETE FROM public.attendance_sessions
+WHERE EXTRACT(DOW FROM session_date) NOT IN (1, 2, 3, 4, 5);

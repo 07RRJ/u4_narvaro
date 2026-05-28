@@ -1,6 +1,6 @@
 // src/routes/auth.routes.js
 import { Router } from 'express';
-import { supabase } from '../lib/supabase.js';
+import { supabase, supabaseAuth } from '../lib/supabase.js';
 import { escape, publicTemplate } from '../utils/html.js';
 
 const router = Router();
@@ -45,15 +45,17 @@ router.post('/auth/login', async (req, res) => {
     return res.redirect('/login');
   }
 
-  // Authenticate via Supabase Auth
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  // Use the ANON client to verify credentials — this must never touch the
+  // service role client, or it would overwrite its auth context and cause
+  // RLS violations on subsequent data writes.
+  const { data, error } = await supabaseAuth.auth.signInWithPassword({ email, password });
 
   if (error || !data?.user) {
     req.session.loginError = 'Incorrect email or password.';
     return res.redirect('/login');
   }
 
-  // Check the user has a teacher/admin profile
+  // Use the service role client to check the profile role (read-only, safe)
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
