@@ -1,0 +1,323 @@
+/* ── Reset & base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 15px;
+  color: #1a1a1a;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ── Navbar ───────────────────────────────────────────────────────────────── */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  height: 52px;
+  background: #1a1a1a;
+  color: #fff;
+  border-bottom: 1px solid #333;
+}
+
+.nav-left, .nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.nav-brand {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -.02em;
+  margin-right: 0.5rem;
+}
+
+.navbar a {
+  color: #ccc;
+  font-size: 0.875rem;
+  transition: color 0.15s;
+}
+.navbar a:hover { color: #fff; }
+.nav-login { color: #fff !important; font-weight: 500; }
+
+.nav-logout {
+  background: none;
+  border: 1px solid #444;
+  color: #ccc;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 5px 12px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+.nav-logout:hover { border-color: #fff; color: #fff; }
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-primary {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+.btn-primary:hover { background: #333; border-color: #333; }
+
+.btn-secondary {
+  background: #fff;
+  color: #1a1a1a;
+  border-color: #d0d0d0;
+}
+.btn-secondary:hover { background: #f0f0f0; }
+
+.btn-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+.btn-danger:hover { background: #fecaca; }
+
+.btn-full { width: 100%; justify-content: center; }
+.btn-sm   { padding: 4px 10px; font-size: 0.8rem; }
+
+/* ── Week navigation ──────────────────────────────────────────────────────── */
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.week-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0 6px;
+  min-width: 220px;
+  text-align: center;
+}
+
+.week-arrow { padding: 8px 14px; font-size: 1rem; }
+
+/* ── Attendance table ─────────────────────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.attendance-table thead tr {
+  background: #f4f4f4;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.attendance-table th {
+  padding: 10px 14px;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.attendance-table th.col-student { text-align: left; min-width: 140px; }
+.attendance-table th.col-future  { color: #aaa; }
+
+.day-name { display: block; font-size: 0.8rem; }
+.day-date { display: block; font-size: 0.7rem; color: #888; font-weight: 400; margin-top: 2px; }
+
+.attendance-table tbody tr { border-top: 1px solid #ebebeb; }
+.attendance-table tbody tr:hover { background: #fafafa; }
+
+.cell-student { padding: 0 14px; font-weight: 500; }
+.attendance-table tbody td { height: 44px; }
+
+/* ── View mode cells ──────────────────────────────────────────────────────── */
+.cell-view   { text-align: center; }
+.cell-present { background: #dcfce7; }
+.cell-absent  { background: #fff; }
+.cell-future  { background: #e5e7eb; }
+
+/* ── Edit mode cells ──────────────────────────────────────────────────────── */
+.cell-edit {
+  text-align: center;
+}
+
+.attendance-check {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #1a1a1a;
+}
+
+/* ── Edit actions ─────────────────────────────────────────────────────────── */
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+
+/* ── Generic table (students list) ───────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+table thead tr { background: #f4f4f4; border-bottom: 1px solid #e0e0e0; }
+table th { padding: 10px 14px; text-align: left; font-weight: 500; }
+table tbody tr { border-top: 1px solid #ebebeb; }
+table tbody td { padding: 10px 14px; }
+table tbody tr:hover { background: #fafafa; }
+
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+
+/* ── Inline form (add student) ────────────────────────────────────────────── */
+.inline-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.inline-form input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  font: inherit;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.inline-form input[type="text"]:focus {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* ── Auth / Login ─────────────────────────────────────────────────────────── */
+.auth-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 52px);
+  padding: 2rem;
+}
+
+.auth-box {
+  width: 380px;
+  max-width: 100%;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.auth-box h1 {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.auth-box form {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-box label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #444;
+}
+
+.auth-box input {
+  padding: 9px 12px;
+  font: inherit;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.auth-box input:focus {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* ── Alerts ───────────────────────────────────────────────────────────────── */
+.alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+/* ── Empty states ─────────────────────────────────────────────────────────── */
+.empty {
+  text-align: center;
+  color: #888;
+  padding: 2rem;
+  font-size: 0.9rem;
+}

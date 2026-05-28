@@ -1,1 +1,16 @@
-{"name":"request-resan-mini","version":"1.0.0","type":"module","main":"src/index.js","scripts":{"dev":"node --watch --env-file=.env src/index.js","start":"node --env-file=.env src/index.js"},"dependencies":{"@supabase/supabase-js":"^2.95.3","express":"^5.2.1","helmet":"^8.1.0"}}
+{
+  "name": "attendance-site",
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=.env src/server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2",
+    "connect-pg-simple": "^10.0.0",
+    "csurf": "^1.11.0",
+    "express": "^5.2.1",
+    "express-session": "^1.18.1",
+    "helmet": "^8.2.0",
+    "i": "^0.3.7"
+  }
+}
