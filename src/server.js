@@ -19,7 +19,8 @@ const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
-app.use(express.urlencoded({ extended: false }));
+// extended: true is required to parse nested bracket fields like present[studentId][date]
+app.use(express.urlencoded({ extended: true }));
 
 // ── Static files ──────────────────────────────────────────────────────────────
 app.use(express.static(join(__dirname, 'public')));
