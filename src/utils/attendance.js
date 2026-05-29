@@ -44,7 +44,7 @@ export function renderViewTable({ students, sessions, records }) {
         return `<td class="cell-future"></td>`;
       }
       const rec = records.find(
-        (r) => r.session_id === s.id && r.student_id === student.id
+        (r) => Number(r.session_id) === Number(s.id) && Number(r.student_id) === Number(student.id)
       );
       const present = rec?.present ?? false;
       return `<td class="cell-view ${present ? 'cell-present' : 'cell-absent'}"></td>`;
@@ -91,11 +91,11 @@ export function renderEditTable({ students, sessions, records, offset, csrfToken
         return `<td class="cell-future"></td>`;
       }
       const rec = records.find(
-        (r) => r.session_id === s.id && r.student_id === student.id
+        (r) => Number(r.session_id) === Number(s.id) && Number(r.student_id) === Number(student.id)
       );
       const checked = rec?.present ? 'checked' : '';
       // Name encodes both student + date so the server can unpack it
-      const fieldName = `present[${student.id}][${s.session_date}]`;
+      const fieldName = `present[s${student.id}][${s.session_date}]`;
       return `<td class="cell-edit">
         <input type="checkbox" name="${fieldName}" value="1" ${checked}
                class="attendance-check" aria-label="${escape(student.full_name)} ${escape(dayName(s.session_date))}"/>

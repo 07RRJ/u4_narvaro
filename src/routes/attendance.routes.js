@@ -30,15 +30,25 @@ async function fetchWeekData(weekDates) {
   const sessions = weekDates.map((date) => sessionMap[date] ?? { id: null, session_date: date });
 
   let records = [];
-  const realIds = sessions.filter((s) => s.id).map((s) => s.id);
+  const realIds = sessions.filter((s) => s.id).map((s) => Number(s.id));
   if (realIds.length) {
     const { data } = await supabase
       .from('attendance_records')
       .select('session_id, student_id, present')
-      .in('session_id', realIds);
-    records = data ?? [];
+      .in('session_id', realIds)
+      .limit(5000);
+    // Normalize IDs to numbers so strict === comparisons work in templates
+    records = (data ?? []).map((r) => ({
+      ...r,
+      session_id: Number(r.session_id),
+      student_id: Number(r.student_id),
+    }));
   }
 
+  console.log('[fetchWeekData] students:', (students ?? []).map(s => `${s.id}:${s.full_name}`));
+  console.log('[fetchWeekData] sessions:', sessions.map(s => `${s.session_date}(id=${s.id})`));
+  console.log('[fetchWeekData] records count:', records.length);
+  console.log('[fetchWeekData] present records:', records.filter(r=>r.present).map(r=>`s${r.student_id}@sess${r.session_id}`));
   return { students: students ?? [], sessions, records };
 }
 
@@ -105,6 +115,7 @@ router.post('/attendance/save', requireTeacher, async (req, res) => {
 
   const presentMap = req.body.present ?? {};
 
+
   // Only save non-future days
   // Use local date for today — toISOString() returns UTC which is wrong in UTC+ timezones
   const now = new Date();
@@ -130,24 +141,22 @@ router.post('/attendance/save', requireTeacher, async (req, res) => {
     return res.redirect(`/attendance/edit?week=${offset}`);
   }
 
-  // 2. Fetch canonical session IDs (covers both new and pre-existing rows)
-  const { data: sessions, error: fetchError } = await supabase
-    .from('attendance_sessions')
-    .select('id, session_date')
-    .in('session_date', editableDates);
+  // 2. Fetch sessions AND students together — same query as the view uses,
+  //    so we get exactly the same student list that was rendered in the form.
+  const { students: allStudents, sessions: allSessions } = await fetchWeekData(weekDates);
+  const editableSessions = allSessions.filter((s) => s.id && editableDates.includes(s.session_date));
 
-  if (fetchError || !sessions?.length) {
-    console.error('[attendance/save] session fetch error:', fetchError);
+  if (!editableSessions.length) {
+    console.error('[attendance/save] no sessions found for editable dates');
     return res.redirect(`/attendance/edit?week=${offset}`);
   }
 
-  const sessionByDate = Object.fromEntries(sessions.map((s) => [s.session_date, s.id]));
+  const sessionByDate = Object.fromEntries(editableSessions.map((s) => [s.session_date, Number(s.id)]));
+  const studentIds = allStudents.map((s) => Number(s.id));
+  console.log('[attendance/save] studentIds:', studentIds);
 
-  // 3. Fetch all valid student IDs
-  const { data: students } = await supabase.from('students').select('id');
-  const studentIds = new Set((students ?? []).map((s) => String(s.id)));
-
-  // 4. Build upsert payload: one row per student × editable day
+  // 4. Build records: one row per student × editable day
+  const sessionIds = Object.values(sessionByDate).filter(Boolean);
   const records = [];
   for (const date of editableDates) {
     const sessionId = sessionByDate[date];
@@ -155,8 +164,8 @@ router.post('/attendance/save', requireTeacher, async (req, res) => {
     for (const studentId of studentIds) {
       records.push({
         session_id: sessionId,
-        student_id: parseInt(studentId, 10),
-        present: presentMap[studentId]?.[date] === '1',
+        student_id: studentId,
+        present: presentMap['s' + studentId]?.[date] === '1',
         marked_by: teacherId,
         marked_at: new Date().toISOString(),
       });
@@ -164,14 +173,33 @@ router.post('/attendance/save', requireTeacher, async (req, res) => {
   }
 
   if (records.length) {
-    const { error: recordError } = await supabase
+    // Delete-then-insert avoids all ON CONFLICT complexity.
+    // Supabase's onConflict upsert requires a named UNIQUE constraint;
+    // our table only has a PRIMARY KEY which Postgres names automatically,
+    // causing silent partial failures. Delete+insert is simpler and reliable.
+    const { error: deleteError, count: deleteCount } = await supabase
       .from('attendance_records')
-      .upsert(records, { onConflict: 'session_id,student_id' });
+      .delete()
+      .in('session_id', sessionIds);
 
-    if (recordError) {
-      console.error('[attendance/save] record upsert error:', recordError);
+    console.log('[attendance/save] deleted rows:', deleteCount, 'error:', deleteError);
+
+    if (deleteError) {
+      console.error('[attendance/save] delete error:', deleteError);
+      return res.redirect(`/attendance/edit?week=${offset}`);
+    }
+
+    const { data: insertedRows, error: insertError2 } = await supabase
+      .from('attendance_records')
+      .insert(records)
+      .select('session_id, student_id, present');
+
+    if (insertError2) {
+      console.error('[attendance/save] insert error:', insertError2);
     } else {
-      console.log(`[attendance/save] wrote ${records.length} records for week offset ${offset}`);
+      console.log(`[attendance/save] sent ${records.length} records, DB confirmed ${insertedRows?.length}`);
+      console.log('[attendance/save] present flags sent:', records.filter(r=>r.present).map(r=>`s${r.student_id}@${r.session_id}`));
+      console.log('[attendance/save] present flags back:', insertedRows?.filter(r=>r.present).map(r=>`s${r.student_id}@${r.session_id}`));
     }
   }
 
